@@ -9,7 +9,10 @@ docker compose pull && docker compose up -d   # prebuilt image from ghcr.io
 docker compose up -d --build                   # or build locally
 docker compose logs -f
 docker attach minecraft-server-mc-1   # server console; detach with Ctrl-P Ctrl-Q
+docker compose exec mc send-command op alice   # run a console command from scripts or cron
 ```
+
+Pumpkin has no RCON, so there is no `rcon-cli`. Use `send-command` instead. Command output goes to the server log.
 
 Server files (`pumpkin.toml`, `world/`, `ops.json`, ...) live in `./data`. Env vars are applied to `pumpkin.toml` on every start. Anything you don't set stays as it is in the file.
 

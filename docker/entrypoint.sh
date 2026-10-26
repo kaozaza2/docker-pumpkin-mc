@@ -95,4 +95,11 @@ add_players() {
 if [ -n "${OPS:-}" ]; then add_players ops.json "$OPS" "{level: ${OP_PERMISSION_LEVEL:-4}, bypassesPlayerLimit: false}"; fi
 if [ -n "${WHITELIST:-}" ]; then add_players whitelist.json "$WHITELIST" '{}'; fi
 
-exec pumpkin "$@"
+rm -f "$CONSOLE_PIPE"
+mkfifo -m 600 "$CONSOLE_PIPE"
+# Forward stdin so `docker attach` still takes commands; subshell hands the loop to tini for reaping.
+exec 3<&0
+(while IFS= read -r line <&3; do [ -z "$line" ] || send-command "$line"; done &)
+exec 3<&-
+# Read-write open: the pipe never hits EOF when a writer closes.
+exec pumpkin "$@" <>"$CONSOLE_PIPE"

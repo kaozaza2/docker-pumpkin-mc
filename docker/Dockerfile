@@ -30,8 +30,9 @@ FROM alpine:3.24
 RUN apk add --no-cache ca-certificates curl jq libgcc su-exec tini tzdata yq-go
 COPY --from=binary /pumpkin /usr/local/bin/pumpkin
 COPY --chmod=755 docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY --chmod=755 docker/send-command.sh /usr/local/bin/send-command
 
-ENV UID=1000 GID=1000 RUST_BACKTRACE=1
+ENV UID=1000 GID=1000 RUST_BACKTRACE=1 CONSOLE_PIPE=/tmp/console
 WORKDIR /data
 VOLUME /data
 EXPOSE 25565/tcp 19132/udp
