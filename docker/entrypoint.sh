@@ -96,7 +96,7 @@ if [ -n "${OPS:-}" ]; then add_players ops.json "$OPS" "{level: ${OP_PERMISSION_
 if [ -n "${WHITELIST:-}" ]; then add_players whitelist.json "$WHITELIST" '{}'; fi
 
 rm -f "$CONSOLE_PIPE"
-mkfifo -m 600 "$CONSOLE_PIPE"
+mkfifo -m 622 "$CONSOLE_PIPE"
 # Forward stdin so `docker attach` still takes commands; subshell hands the loop to tini for reaping.
 exec 3<&0
 (while IFS= read -r line <&3; do [ -z "$line" ] || send-command "$line"; done &)
