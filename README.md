@@ -12,7 +12,7 @@ docker attach minecraft-server-mc-1   # server console; detach with Ctrl-P Ctrl-
 docker compose exec mc send-command op alice   # run a console command from scripts or cron
 ```
 
-Pumpkin has no RCON, so there is no `rcon-cli`. Use `send-command` instead. Command output goes to the server log.
+Pumpkin has no RCON, so there is no `rcon-cli`. Use `send-command` instead: it prints the server's reply, waiting up to 3 seconds. Any other server output in that window shows up too. `send-command -q` sends without waiting.
 
 Server files (`pumpkin.toml`, `world/`, `ops.json`, ...) live in `./data`. Env vars are applied to `pumpkin.toml` on every start. Anything you don't set stays as it is in the file.
 

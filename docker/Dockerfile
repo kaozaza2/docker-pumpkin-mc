@@ -33,11 +33,11 @@ COPY --from=binary /pumpkin /usr/local/bin/pumpkin
 COPY --chmod=755 docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY --chmod=755 docker/send-command.sh /usr/local/bin/send-command
 
-ENV UID=1000 GID=1000 RUST_BACKTRACE=1 CONSOLE_PIPE=/run/pumpkin/console
+ENV UID=1000 GID=1000 RUST_BACKTRACE=1 CONSOLE_DIR=/run/pumpkin
 WORKDIR /data
 VOLUME /data
 EXPOSE 25565/tcp 19132/udp
 
 HEALTHCHECK --start-period=1m --interval=30s --timeout=3s --retries=3 \
     CMD nc -z 127.0.0.1 "${SERVER_PORT:-25565}" || exit 1
-ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

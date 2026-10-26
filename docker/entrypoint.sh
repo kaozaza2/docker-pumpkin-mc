@@ -11,6 +11,10 @@ if [ "$(id -u)" = 0 ]; then
   find /data \( \! -user "$UID" -o \! -group "$GID" \) -exec chown -h "$UID:$GID" {} +
   exec su-exec "$UID:$GID" "$0" "$@"
 fi
+# Start tini only after dropping root, so it can signal the server without CAP_KILL.
+if [ $$ = 1 ]; then
+  exec tini -g -- "$0" "$@"
+fi
 
 # env var | toml key | kind (str, raw, enum, port)
 SETTINGS='
@@ -95,11 +99,20 @@ add_players() {
 if [ -n "${OPS:-}" ]; then add_players ops.json "$OPS" "{level: ${OP_PERMISSION_LEVEL:-4}, bypassesPlayerLimit: false}"; fi
 if [ -n "${WHITELIST:-}" ]; then add_players whitelist.json "$WHITELIST" '{}'; fi
 
-rm -f "$CONSOLE_PIPE"
-mkfifo -m 622 "$CONSOLE_PIPE"
-# Forward stdin so `docker attach` still takes commands; subshell hands the loop to tini for reaping.
+rm -f "$CONSOLE_DIR"/input "$CONSOLE_DIR"/output "$CONSOLE_DIR"/capture.*
+mkfifo -m 622 "$CONSOLE_DIR/input"
+mkfifo -m 600 "$CONSOLE_DIR/output"
+# Forward stdin so `docker attach` still takes commands; subshells hand the loops to tini for reaping.
 exec 3<&0
-(while IFS= read -r line <&3; do [ -z "$line" ] || send-command "$line"; done &)
+(while IFS= read -r line <&3; do [ -z "$line" ] || send-command -q "$line"; done &)
 exec 3<&-
-# Read-write open: the pipe never hits EOF when a writer closes.
-exec pumpkin "$@" <>"$CONSOLE_PIPE"
+# Holds the input pipe open between commands; when stop kills it, the server sees EOF and can finish saving.
+(sleep 2147483647 >"$CONSOLE_DIR/input" &)
+# Copy server output to the container log and to each send-command waiting for a reply; survives stop to log the save.
+(trap '' TERM INT HUP; while IFS= read -r line; do
+  printf '%s\n' "$line"
+  for f in "$CONSOLE_DIR"/capture.*; do
+    if [ -f "$f" ]; then printf '%s\n' "$line" >>"$f"; fi
+  done
+done <"$CONSOLE_DIR/output" &)
+exec pumpkin "$@" <"$CONSOLE_DIR/input" >"$CONSOLE_DIR/output"
