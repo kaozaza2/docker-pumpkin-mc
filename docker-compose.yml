@@ -1,0 +1,29 @@
+services:
+  mc:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        PUMPKIN_SOURCE: release # "source" compiles ./pumpkin instead
+        PUMPKIN_VERSION: nightly
+    image: ghcr.io/kaozaza2/docker-pumpkin-mc:latest
+    ports:
+      - "25565:25565"
+      - "19132:19132/udp"
+    environment:
+      MOTD: "A Pumpkin server in Docker"
+      DIFFICULTY: normal
+      MODE: survival
+      MAX_PLAYERS: 20
+      VIEW_DISTANCE: 10
+      ONLINE_MODE: "true"
+      TZ: Asia/Bangkok
+      # OPS: alice,bob
+      # WHITELIST: alice,bob,carol
+      # ENABLE_WHITELIST: "true"
+      # CFG_NETWORKING__JAVA__PACKET_LIMITER__ENABLED: "false"
+    volumes:
+      - ./data:/data
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
