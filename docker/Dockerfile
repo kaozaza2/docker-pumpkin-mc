@@ -27,12 +27,13 @@ RUN --mount=type=cache,sharing=private,target=/src/target \
 FROM ${PUMPKIN_SOURCE} AS binary
 
 FROM alpine:3.24
-RUN apk add --no-cache ca-certificates curl jq libgcc su-exec tini tzdata yq-go
+RUN apk add --no-cache ca-certificates curl jq libgcc su-exec tini tzdata yq-go && \
+    mkdir -m 777 /run/pumpkin # not sticky like /tmp, so fs.protected_fifos lets root open the pipe
 COPY --from=binary /pumpkin /usr/local/bin/pumpkin
 COPY --chmod=755 docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY --chmod=755 docker/send-command.sh /usr/local/bin/send-command
 
-ENV UID=1000 GID=1000 RUST_BACKTRACE=1 CONSOLE_PIPE=/tmp/console
+ENV UID=1000 GID=1000 RUST_BACKTRACE=1 CONSOLE_PIPE=/run/pumpkin/console
 WORKDIR /data
 VOLUME /data
 EXPOSE 25565/tcp 19132/udp
